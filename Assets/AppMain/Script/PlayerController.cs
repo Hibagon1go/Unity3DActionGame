@@ -4,10 +4,14 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    // アニメーター.
+    Animator animator = null;
+
     // Start is called before the first frame update
     void Start()
     {
-        
+        // Animatorを取得し保管.
+        animator = GetComponent<Animator>();
     }
 
     // Update is called once per frame
@@ -23,6 +27,7 @@ public class PlayerController : MonoBehaviour
     // ---------------------------------------------------------------------
     public void OnAttackButtonClicked()
     {
-        Debug.Log( "攻撃!!" );
+　　    // AnimationのisAttackトリガーを起動.
+        animator.SetTrigger( "isAttack" );
     }
 }
