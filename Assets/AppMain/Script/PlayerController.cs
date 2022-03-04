@@ -12,6 +12,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] GameObject touchMarker = null;
     // ジャンプ力.
     [SerializeField] float jumpPower = 20f;
+    // カメラコントローラー.
+    [SerializeField] PlayerCameraController cameraController = null;
     // アニメーター.
     Animator animator = null;
     // リジッドボディ.
@@ -34,7 +36,6 @@ public class PlayerController : MonoBehaviour
     // 左半分タッチ入力.
     Vector2 leftTouchInput = new Vector2();
 
-    // Start is called before the first frame update
     void Start()
     {
         // Animatorを取得し保管.
@@ -55,6 +56,9 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // カメラをプレイヤーに向ける. 
+        cameraController.UpdateCameraLook(this.transform);
+
         if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.IPhonePlayer)
         {
             // スマホタッチ操作.
@@ -115,7 +119,7 @@ public class PlayerController : MonoBehaviour
                     // 右タッチ.
                     if (isRightTouch == true)
                     {
-                        // 右半分をタッチした際の処理.
+                        cameraController.UpdateRightTouch( touch );
                     }
                 }
             }
@@ -150,6 +154,9 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
+        // カメラの位置をプレイヤーに合わせる.
+        cameraController.FixedUpdateCameraPosition(this.transform);
+
         if (isAttack == false)
         {
             Vector3 input = new Vector3();
