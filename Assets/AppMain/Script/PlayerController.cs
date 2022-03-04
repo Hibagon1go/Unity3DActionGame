@@ -1,13 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
- 
+
 public class PlayerController : MonoBehaviour
 {
     // 攻撃判定用オブジェクト.
     [SerializeField] GameObject attackHit = null;
     // 設置判定用ColliderCall.
     [SerializeField] ColliderCallReceiver footColliderCall = null;
+    // タッチマーカー.
+    [SerializeField] GameObject touchMarker = null;
     // ジャンプ力.
     [SerializeField] float jumpPower = 20f;
     // アニメーター.
@@ -18,7 +20,7 @@ public class PlayerController : MonoBehaviour
     bool isAttack = false;
     // 接地フラグ.
     bool isGround = false;
- 
+
     // PCキー横方向入力.
     float horizontalKeyInput = 0;
     // PCキー縦方向入力.
@@ -40,70 +42,78 @@ public class PlayerController : MonoBehaviour
         // Rigidbodyの取得.
         rigid = GetComponent<Rigidbody>();
         // 攻撃判定用オブジェクトを非表示に.
-        attackHit.SetActive( false );
- 
+        attackHit.SetActive(false);
+        // マーカーを非表示に.
+        touchMarker.SetActive(false);
+
+
         // FootSphereのイベント登録.
-        footColliderCall.TriggerEnterEvent.AddListener( OnFootTriggerEnter );
-        footColliderCall.TriggerExitEvent.AddListener( OnFootTriggerExit );
+        footColliderCall.TriggerEnterEvent.AddListener(OnFootTriggerEnter);
+        footColliderCall.TriggerExitEvent.AddListener(OnFootTriggerExit);
     }
- 
+
     // Update is called once per frame
     void Update()
     {
-        if( Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer )
+        if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.IPhonePlayer)
         {
             // スマホタッチ操作.
             // タッチしている指の数が０より多い.
-            if( Input.touchCount > 0 )
+            if (Input.touchCount > 0)
             {
                 isTouch = true;
                 // タッチ情報をすべて取得.
                 Touch[] touches = Input.touches;
                 // 全部のタッチを繰り返して判定.
-                foreach( var touch in touches )
+                foreach (var touch in touches)
                 {
                     bool isLeftTouch = false;
                     bool isRightTouch = false;
                     // タッチ位置のX軸方向がスクリーンの左側.
-                    if( touch.position.x > 0 && touch.position.x < Screen.width / 2 )
+                    if (touch.position.x > 0 && touch.position.x < Screen.width / 2)
                     {
                         isLeftTouch = true;
                     }
                     // タッチ位置のX軸方向がスクリーンの右側.
-                    else if( touch.position.x > Screen.width / 2 && touch.position.x < Screen.width )
+                    else if (touch.position.x > Screen.width / 2 && touch.position.x < Screen.width)
                     {
-                        isRightTouch = true;;
+                        isRightTouch = true; ;
                     }
-    
+
                     // 左タッチ.
-                    if( isLeftTouch == true )
+                    if (isLeftTouch == true)
                     {
                         // タッチ開始.
-                        if( touch.phase == TouchPhase.Began )
+                        if (touch.phase == TouchPhase.Began)
                         {
-                            Debug.Log( "タッチ開始" );
                             // 開始位置を保管.
                             leftStartTouch = touch.position;
+                            // 開始位置にマーカーを表示.
+                            touchMarker.SetActive(true);
+                            Vector3 touchPosition = touch.position;
+                            touchPosition.z = 1f;
+                            Vector3 markerPosition = Camera.main.ScreenToWorldPoint(touchPosition);
+                            touchMarker.transform.position = markerPosition;
                         }
                         // タッチ中.
-                        else if( touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary )
+                        else if (touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary)
                         {
-                            Debug.Log( "タッチ中" );
                             // 現在の位置を随時保管.
                             Vector2 position = touch.position;
                             // 移動用の方向を保管.
                             leftTouchInput = position - leftStartTouch;
                         }
                         // タッチ終了.
-                        else if( touch.phase == TouchPhase.Ended )
+                        else if (touch.phase == TouchPhase.Ended)
                         {
-                            Debug.Log( "タッチ終了" );
                             leftTouchInput = Vector2.zero;
+                            // マーカーを非表示.
+                            touchMarker.gameObject.SetActive(false);
                         }
                     }
-    
+
                     // 右タッチ.
-                    if( isRightTouch == true )
+                    if (isRightTouch == true)
                     {
                         // 右半分をタッチした際の処理.
                     }
@@ -117,52 +127,52 @@ public class PlayerController : MonoBehaviour
         else
         {
             // PCキー入力取得.
-            horizontalKeyInput = Input.GetAxis( "Horizontal" );
-            verticalKeyInput = Input.GetAxis( "Vertical" );
+            horizontalKeyInput = Input.GetAxis("Horizontal");
+            verticalKeyInput = Input.GetAxis("Vertical");
         }
- 
+
         // プレイヤーの向きを調整.
-        bool isKeyInput = ( horizontalKeyInput != 0 || verticalKeyInput != 0 || leftTouchInput != Vector2.zero );
-        if( isKeyInput == true && isAttack == false )
+        bool isKeyInput = (horizontalKeyInput != 0 || verticalKeyInput != 0 || leftTouchInput != Vector2.zero);
+        if (isKeyInput == true && isAttack == false)
         {
-            bool currentIsRun = animator.GetBool( "isRun" );
-            if( currentIsRun == false ) animator.SetBool( "isRun", true );
+            bool currentIsRun = animator.GetBool("isRun");
+            if (currentIsRun == false) animator.SetBool("isRun", true);
             Vector3 dir = rigid.velocity.normalized;
             dir.y = 0;
             this.transform.forward = dir;
         }
         else
         {
-            bool currentIsRun = animator.GetBool( "isRun" );
-            if( currentIsRun == true ) animator.SetBool( "isRun", false );
+            bool currentIsRun = animator.GetBool("isRun");
+            if (currentIsRun == true) animator.SetBool("isRun", false);
         }
     }
- 
+
     void FixedUpdate()
     {
-        if( isAttack == false )
+        if (isAttack == false)
         {
             Vector3 input = new Vector3();
             Vector3 move = new Vector3();
-            if( Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer )
+            if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.IPhonePlayer)
             {
-                input = new Vector3( leftTouchInput.x, 0, leftTouchInput.y );
+                input = new Vector3(leftTouchInput.x, 0, leftTouchInput.y);
                 move = input.normalized * 2f;
             }
             else
             {
-                input = new Vector3( horizontalKeyInput, 0, verticalKeyInput );
+                input = new Vector3(horizontalKeyInput, 0, verticalKeyInput);
                 move = input.normalized * 2f;
             }
             Vector3 cameraMove = Camera.main.gameObject.transform.rotation * move;
             cameraMove.y = 0;
             Vector3 currentRigidVelocity = rigid.velocity;
             currentRigidVelocity.y = 0;
- 
-            rigid.AddForce( cameraMove - currentRigidVelocity, ForceMode.VelocityChange );
+
+            rigid.AddForce(cameraMove - currentRigidVelocity, ForceMode.VelocityChange);
         }
     }
- 
+
     // ---------------------------------------------------------------------
     /// <summary>
     /// 攻撃ボタンクリックコールバック.
@@ -170,15 +180,15 @@ public class PlayerController : MonoBehaviour
     // ---------------------------------------------------------------------
     public void OnAttackButtonClicked()
     {
-        if( isAttack == false )
+        if (isAttack == false)
         {
             // AnimationのisAttackトリガーを起動.
-            animator.SetTrigger( "isAttack" );
+            animator.SetTrigger("isAttack");
             // 攻撃開始.
             isAttack = true;
         }
     }
- 
+
     // ---------------------------------------------------------------------
     /// <summary>
     /// ジャンプボタンクリックコールバック.
@@ -186,42 +196,42 @@ public class PlayerController : MonoBehaviour
     // ---------------------------------------------------------------------
     public void OnJumpButtonClicked()
     {
-        if( isGround == true )
+        if (isGround == true)
         {
-            rigid.AddForce( Vector3.up * jumpPower, ForceMode.Impulse );
+            rigid.AddForce(Vector3.up * jumpPower, ForceMode.Impulse);
         }
     }
- 
+
     // ---------------------------------------------------------------------
     /// <summary>
     /// FootSphereトリガーエンターコール.
     /// </summary>
     /// <param name="col"> 侵入したコライダー. </param>
     // ---------------------------------------------------------------------
-    void OnFootTriggerEnter( Collider col )
+    void OnFootTriggerEnter(Collider col)
     {
-        if( col.gameObject.tag == "Ground" )
+        if (col.gameObject.tag == "Ground")
         {
             isGround = true;
-            animator.SetBool( "isGround", true );
+            animator.SetBool("isGround", true);
         }
     }
- 
+
     // ---------------------------------------------------------------------
     /// <summary>
     /// FootSphereトリガーイグジットコール.
     /// </summary>
     /// <param name="col"> 侵入したコライダー. </param>
     // ---------------------------------------------------------------------
-    void OnFootTriggerExit( Collider col )
+    void OnFootTriggerExit(Collider col)
     {
-        if( col.gameObject.tag == "Ground" )
+        if (col.gameObject.tag == "Ground")
         {
             isGround = false;
-            animator.SetBool( "isGround", false );
+            animator.SetBool("isGround", false);
         }
     }
- 
+
     // ---------------------------------------------------------------------
     /// <summary>
     /// 攻撃アニメーションHitイベントコール.
@@ -229,11 +239,10 @@ public class PlayerController : MonoBehaviour
     // ---------------------------------------------------------------------
     void Anim_AttackHit()
     {
-        Debug.Log( "Hit" );
         // 攻撃判定用オブジェクトを表示.
-        attackHit.SetActive( true );
+        attackHit.SetActive(true);
     }
- 
+
     // ---------------------------------------------------------------------
     /// <summary>
     /// 攻撃アニメーション終了イベントコール.
@@ -241,9 +250,8 @@ public class PlayerController : MonoBehaviour
     // ---------------------------------------------------------------------
     void Anim_AttackEnd()
     {
-        Debug.Log( "End" );
         // 攻撃判定用オブジェクトを非表示に.
-        attackHit.SetActive( false );
+        attackHit.SetActive(false);
         // 攻撃終了.
         isAttack = false;
     }
